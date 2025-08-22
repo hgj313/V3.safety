@@ -110,6 +110,12 @@ const OptimizationPage: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [currentOptimization, navigate]); // 依赖项中不再需要lastNavigatedTaskId，因为useRef的更新不会触发重渲染
+
+  // 关键修复：在组件挂载时重置导航状态
+  useEffect(() => {
+    // 当用户进入优化页面时，重置导航记录
+    lastNavigatedTaskId.current = null;
+  }, []);
   
   // 本地UI状态
   const [designCollapsed, setDesignCollapsed] = useState(false);
@@ -1079,4 +1085,4 @@ const OptimizationPage: React.FC = () => {
   );
 };
 
-export default OptimizationPage; 
+export default OptimizationPage;
