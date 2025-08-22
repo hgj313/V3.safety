@@ -1,0 +1,184 @@
+# Netlify配置文件 - 钢材采购优化系统 V3.0
+
+[build]
+  # 构建配置
+  command = "npm run build:netlify"
+  functions = "netlify/functions"
+  publish = "client/build"
+  
+  # 环境变量
+  environment = { NODE_VERSION = "18" }
+
+[build.processing]
+  # 跳过图片优化
+  skip_processing = false
+
+[build.processing.css]
+  # CSS处理
+  bundle = true
+  minify = true
+
+[build.processing.js]
+  # JavaScript处理
+  bundle = true
+  minify = true
+
+[build.processing.html]
+  # HTML处理
+  pretty_urls = true
+
+# 函数配置
+[functions]
+  # 函数目录
+  directory = "netlify/functions"
+  
+  # 明确包含函数需要依赖的外部目录
+  included_files = ["api/**", "core/**"]
+
+  # Node.js版本
+  node_bundler = "esbuild"
+
+# 重定向规则
+[[redirects]]
+  # 健康检查
+  from = "/api/health"
+  to = "/.netlify/functions/health"
+  status = 200
+
+[[redirects]]
+  # 系统统计
+  from = "/api/stats"
+  to = "/.netlify/functions/stats"
+  status = 200
+
+[[redirects]]
+  # 优化算法
+  from = "/api/optimize"
+  to = "/.netlify/functions/optimize"
+  status = 200
+
+[[redirects]]
+  # 文件上传
+  from = "/api/upload-design-steels"
+  to = "/.netlify/functions/upload-design-steels"
+  status = 200
+
+[[redirects]]
+  # 约束验证
+  from = "/api/validate-constraints"
+  to = "/.netlify/functions/validate-constraints"
+  status = 200
+
+[[redirects]]
+  # 任务管理 - 获取单个任务
+  from = "/api/task/:taskId"
+  to = "/.netlify/functions/task"
+  status = 200
+
+[[redirects]]
+  # 任务管理 - 任务列表
+  from = "/api/tasks"
+  to = "/.netlify/functions/tasks"
+  status = 200
+
+[[redirects]]
+  # 通用API重定向（备用）
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[[redirects]]
+  # SPA路由重定向
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# 头部配置
+[[headers]]
+  for = "/*"
+  [headers.values]
+    # 安全头部
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    
+    # 缓存控制
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    # API头部
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, PUT, DELETE, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    # HTML缓存
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/static/*"
+  [headers.values]
+    # 静态资源缓存
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# 环境变量
+[context.production.environment]
+  NODE_ENV = "production"
+  REACT_APP_API_URL = "/.netlify/functions"
+  REACT_APP_VERSION = "3.0.0"
+  REACT_APP_NAME = "钢材采购优化系统V3.0"
+  REACT_APP_DEBUG = "false"
+  REACT_APP_PERFORMANCE_MONITORING = "true"
+  REACT_APP_MAX_FILE_SIZE = "10"
+  REACT_APP_MAX_DESIGN_STEELS = "1000"
+  REACT_APP_MAX_MODULE_STEELS = "100"
+  REACT_APP_TASK_TIMEOUT = "300"
+  REACT_APP_DEPLOY_ENV = "production"
+
+[context.deploy-preview.environment]
+  NODE_ENV = "development"
+  REACT_APP_API_URL = "/.netlify/functions"
+  REACT_APP_VERSION = "3.0.0-preview"
+  REACT_APP_NAME = "钢材采购优化系统V3.0(预览)"
+  REACT_APP_DEBUG = "true"
+  REACT_APP_PERFORMANCE_MONITORING = "false"
+  REACT_APP_MAX_FILE_SIZE = "10"
+  REACT_APP_MAX_DESIGN_STEELS = "100"
+  REACT_APP_MAX_MODULE_STEELS = "50"
+  REACT_APP_TASK_TIMEOUT = "60"
+  REACT_APP_DEPLOY_ENV = "preview"
+
+[context.branch-deploy.environment]
+  NODE_ENV = "development"
+  REACT_APP_API_URL = "/.netlify/functions"
+  REACT_APP_VERSION = "3.0.0-dev"
+  REACT_APP_NAME = "钢材采购优化系统V3.0(开发)"
+  REACT_APP_DEBUG = "true"
+  REACT_APP_PERFORMANCE_MONITORING = "false"
+  REACT_APP_MAX_FILE_SIZE = "5"
+  REACT_APP_MAX_DESIGN_STEELS = "50"
+  REACT_APP_MAX_MODULE_STEELS = "20"
+  REACT_APP_TASK_TIMEOUT = "30"
+  REACT_APP_DEPLOY_ENV = "development"
+
+# 插件配置
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+  
+  [plugins.inputs.thresholds]
+    performance = 0.9
+    accessibility = 0.9
+    best-practices = 0.9
+    seo = 0.9
+
+# [[plugins]]
+#   package = "netlify-plugin-cypress"
+  
+#   [plugins.inputs]
+#     enable = false 

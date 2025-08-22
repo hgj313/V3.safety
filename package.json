@@ -1,0 +1,42 @@
+{
+  "name": "hgj-steel-system-v3",
+  "version": "3.0.0",
+  "private": true,
+  "scripts": {
+    "start": "concurrently \"npm:start-server\" \"npm:start-client\"",
+    "start-server": "node server/stable.js",
+    "start-client": "cd client && npm start",
+    "install-all": "npm install && cd client && npm install",
+    "build:netlify": "cd client && npm install && npm run build",
+    "dev": "npm run start",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "performance-check": "node scripts/netlify-performance-check.js",
+    "deploy-check": "npm run build:netlify && echo 'Build completed successfully!'",
+    "prepare-deployment": "node scripts/prepare-deployment.js",
+    "quick-check": "node scripts/quick-check.js",
+    "clean": "node -e \"const fs = require('fs'); const path = require('path'); function rmdir(dir) { try { if (fs.existsSync(dir)) { fs.rmSync(dir, { recursive: true, force: true }); console.log('Cleaned:', dir); } } catch (e) { console.log('Skip:', dir, e.message); } } rmdir('client/build'); rmdir('client/node_modules/.cache');\"",
+    "analyze": "cd client && npm run analyze"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.1",
+    "@netlify/blobs": "^10.0.2",
+    "@react-three/drei": "^10.3.0",
+    "@react-three/fiber": "^9.1.2",
+    "concurrently": "^8.2.2",
+    "cors": "^2.8.5",
+    "csv-parser": "^3.0.0",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
+    "lowdb": "^7.0.1",
+    "multer": "^1.4.5-lts.1",
+    "multiparty": "^4.2.3",
+    "node-fetch": "^2.7.0",
+    "pdfkit": "^0.17.1",
+    "three": "^0.177.0",
+    "uuid": "^9.0.1",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.2/xlsx-0.20.2.tgz"
+  }
+}
