@@ -409,7 +409,7 @@ const ResultsPage: React.FC = () => {
         </Space>
       </div>
     </div>
-  );
-};
+  ); 
+}
 
 export default ResultsPage;
