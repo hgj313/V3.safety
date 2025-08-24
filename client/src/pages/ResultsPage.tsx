@@ -148,7 +148,8 @@ const ResultsPage: React.FC = () => {
 
   // 导出Excel功能
   const handleExportExcel = async () => {
-    try {\      setExporting(true);
+    try {
+      setExporting(true);
       
       const exportData = {
         results: results,
@@ -192,8 +193,7 @@ const ResultsPage: React.FC = () => {
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = '钢材优化报告.xlsx';
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename[^;=
-]*=((['"]).*?\2|[^;\n]*)/);
+        const filenameMatch = contentDisposition.match(/filename[^;=]*=((['"]).*?\2|[^;\n]*)/);
         if (filenameMatch) {
           filename = decodeURIComponent(filenameMatch[1].replace(/['"]/g, ''));
         }
