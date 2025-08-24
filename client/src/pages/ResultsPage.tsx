@@ -160,13 +160,14 @@ const ResultsPage: React.FC = () => {
       const exportResults = {
         ...results,
         solutions: results?.solutions || [],
-        // 使用前端计算好的moduleUsageStats
+        // 使用前端计算好的moduleUsageStats - 字段名匹配后端期望
         moduleUsageStats: processedResults.moduleUsageStats.sortedStats.map(item => ({
           specification: item.specification,
           length: typeof item.length === 'number' ? item.length : parseInt(String(item.length), 10) || 0,
-          totalUsed: item.count,
-          averageUtilization: 0.95, // 默认利用率
-          totalLength: item.totalLength
+          count: item.count, // 后端使用count字段
+          totalLength: item.totalLength,
+          // 移除硬编码的利用率
+          averageUtilization: null
         })),
         summary: results?.summary || {},
         optimizationDetails: results?.optimizationDetails || {},
