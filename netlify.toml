@@ -82,6 +82,18 @@
   status = 200
 
 [[redirects]]
+  # Excel导出
+  from = "/api/export/excel"
+  to = "/.netlify/functions/export-excel"
+  status = 200
+
+[[redirects]]
+  # PDF导出
+  from = "/api/export/pdf"
+  to = "/.netlify/functions/export-pdf"
+  status = 200
+
+[[redirects]]
   # 通用API重定向（备用）
   from = "/api/*"
   to = "/.netlify/functions/:splat"
@@ -181,4 +193,4 @@
 #   package = "netlify-plugin-cypress"
   
 #   [plugins.inputs]
-#     enable = false 
+#     enable = false

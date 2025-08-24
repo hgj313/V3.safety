@@ -1,0 +1,12 @@
+{
+  "name": "steel-system-functions",
+  "version": "1.0.0",
+  "description": "Netlify Functions for steel optimization system",
+  "main": "index.js",
+  "dependencies": {
+    "exceljs": "^4.4.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

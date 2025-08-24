@@ -148,11 +148,10 @@ const ResultsPage: React.FC = () => {
 
   // 导出Excel功能
   const handleExportExcel = async () => {
-    try {
-      setExporting(true);
+    try {\      setExporting(true);
       
       const exportData = {
-        optimizationResult: results,
+        results: results,
         exportOptions: {
           format: 'excel',
           includeCharts: false,
@@ -162,7 +161,14 @@ const ResultsPage: React.FC = () => {
         }
       };
 
-      const response = await fetch('/api/export/excel', {
+      // 检测环境并选择正确的端点
+      const isNetlify = window.location.hostname.includes('netlify.app') || 
+                       window.location.hostname.includes('vercel.app') ||
+                       !window.location.hostname.includes('localhost');
+      
+      const endpoint = isNetlify ? '/.netlify/functions/export-excel' : '/api/export/excel';
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -171,15 +177,23 @@ const ResultsPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Excel导出失败');
+        const errorText = await response.text();
+        let errorMessage = 'Excel导出失败';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       // 获取文件名
       const contentDisposition = response.headers.get('Content-Disposition');
       let filename = '钢材优化报告.xlsx';
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+        const filenameMatch = contentDisposition.match(/filename[^;=
+]*=((['"]).*?\2|[^;\n]*)/);
         if (filenameMatch) {
           filename = decodeURIComponent(filenameMatch[1].replace(/['"]/g, ''));
         }
@@ -213,15 +227,24 @@ const ResultsPage: React.FC = () => {
       message.loading({ content: '正在生成报告...', key: 'export' });
       
       const exportData = {
-        optimizationResult: results,
+        results: results,
         exportOptions: {
-          format: 'pdf', // 保留此参数以供后端识别
-          includeDetails: true
+          format: 'pdf',
+          includeDetails: true,
+          includePurchaseList: true,
+          includeDesignSteels: true
         },
         designSteels: designSteels
       };
 
-      const response = await fetch('/api/export/pdf', {
+      // 检测环境并选择正确的端点
+      const isNetlify = window.location.hostname.includes('netlify.app') || 
+                       window.location.hostname.includes('vercel.app') ||
+                       !window.location.hostname.includes('localhost');
+      
+      const endpoint = isNetlify ? '/.netlify/functions/export-pdf' : '/api/export/pdf';
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -230,31 +253,31 @@ const ResultsPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || '报告生成请求失败');
+        const errorText = await response.text();
+        let errorMessage = 'PDF导出失败';
+        try {
+          const errorData = JSON.parse(errorText);
+          errorMessage = errorData.error || errorMessage;
+        } catch {
+          errorMessage = errorText || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
-      
-      if (result.success && result.htmlContent) {
-        // [方案B]核心逻辑：在前端创建并下载文件
-        const blob = new Blob([result.htmlContent], { type: 'text/html' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = result.fileName || 'report.html';
-        document.body.appendChild(a);
-        a.click();
-        
-        // 清理
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+      // 直接下载HTML文件作为PDF替代方案
+      const htmlContent = await response.text();
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `钢材优化报告_${new Date().toISOString().split('T')[0]}.html`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
 
-        message.success({ content: '报告已成功下载！请在浏览器中打开并打印为PDF。', key: 'export', duration: 5 });
-      } else {
-        throw new Error(result.error || '后端返回的数据格式不正确');
-      }
+      message.success({ content: '报告已成功下载！请在浏览器中打开并打印为PDF。', key: 'export', duration: 5 });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error('报告导出失败:', errorMessage);
@@ -334,4 +357,4 @@ const ResultsPage: React.FC = () => {
   );
 };
 
-export default ResultsPage; 
+export default ResultsPage;
