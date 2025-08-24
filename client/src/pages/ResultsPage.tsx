@@ -155,6 +155,15 @@ const ResultsPage: React.FC = () => {
       if (!results || !results.solutions) {
         throw new Error('优化结果数据不完整，请确保已完成优化');
       }
+
+      // 确保数据结构完整
+      const exportResults = {
+        ...results,
+        solutions: results?.solutions || [],
+        moduleUsageStats: results?.moduleUsageStats || [],
+        summary: results?.summary || {},
+        optimizationDetails: results?.optimizationDetails || {}
+      };
       
       console.log('📊 准备导出Excel数据:', {
         hasResults: !!results,
@@ -171,7 +180,7 @@ const ResultsPage: React.FC = () => {
       
       // 确保发送正确的数据结构
       const exportData = {
-        results: results || {},
+        results: exportResults,
         exportOptions: {
           format: 'excel',
           includeCharts: false,

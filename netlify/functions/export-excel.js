@@ -21,11 +21,34 @@ function extractProcurementData(results) {
   };
 
   try {
-    // 从优化结果中提取采购清单数据
-    if (results.solutions && Array.isArray(results.solutions)) {
+    console.log('🔍 开始提取采购数据:', {
+      hasSolutions: !!results.solutions,
+      solutionsCount: results.solutions?.length || 0,
+      hasModuleUsageStats: !!results.moduleUsageStats
+    });
+
+    // 优先使用moduleUsageStats（如果有的话）
+    if (results.moduleUsageStats && Array.isArray(results.moduleUsageStats)) {
+      console.log('✅ 使用moduleUsageStats数据');
+      procurementData.purchaseList = results.moduleUsageStats.map((item, index) => ({
+        specification: item.specification || '',
+        length: item.length || 0,
+        quantity: item.totalUsed || 0,
+        utilization: item.averageUtilization || 0,
+        remark: `利用率: ${((item.averageUtilization || 0) * 100).toFixed(1)}%`
+      }));
+    } 
+    // 回退到从solutions提取
+    else if (results.solutions && Array.isArray(results.solutions)) {
+      console.log('✅ 从solutions提取数据');
       const moduleUsageMap = new Map();
       
-      results.solutions.forEach(solution => {
+      results.solutions.forEach((solution, solutionIndex) => {
+        console.log(`处理解决方案 ${solutionIndex}:`, {
+          hasModuleUsage: !!solution.moduleUsage,
+          moduleUsageCount: solution.moduleUsage?.length || 0
+        });
+        
         if (solution.moduleUsage && Array.isArray(solution.moduleUsage)) {
           solution.moduleUsage.forEach(usage => {
             if (usage && usage.specification && usage.length !== undefined) {
@@ -48,13 +71,19 @@ function extractProcurementData(results) {
       });
 
       procurementData.purchaseList = Array.from(moduleUsageMap.values());
-      procurementData.actualPurchase = procurementData.purchaseList.reduce((sum, item) => sum + item.quantity, 0);
-      
-      // 计算平均利用率
-      if (procurementData.purchaseList.length > 0) {
-        procurementData.overallUtilization = procurementData.purchaseList.reduce((sum, item) => sum + item.utilization, 0) / procurementData.purchaseList.length;
-      }
     }
+
+    // 计算统计数据
+    procurementData.actualPurchase = procurementData.purchaseList.reduce((sum, item) => sum + item.quantity, 0);
+    if (procurementData.purchaseList.length > 0) {
+      procurementData.overallUtilization = procurementData.purchaseList.reduce((sum, item) => sum + item.utilization, 0) / procurementData.purchaseList.length;
+    }
+
+    console.log('📊 提取结果:', {
+      purchaseListCount: procurementData.purchaseList.length,
+      actualPurchase: procurementData.actualPurchase,
+      overallUtilization: procurementData.overallUtilization
+    });
 
     return procurementData;
   } catch (error) {
@@ -172,11 +201,14 @@ exports.handler = async (event, context) => {
     // 写入缓冲区
     const buffer = await workbook.xlsx.writeBuffer();
     
+    // 修复文件名编码问题
+    const filename = encodeURIComponent(`钢材优化报告_${new Date().toISOString().split('T')[0]}.xlsx`);
+    
     return {
       statusCode: 200,
       headers: handleCors({
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename="钢材优化报告_${new Date().toISOString().split('T')[0]}.xlsx"`,
+        'Content-Disposition': `attachment; filename*=UTF-8''${filename}`,
         'Content-Length': buffer.length
       }),
       body: buffer.toString('base64'),
