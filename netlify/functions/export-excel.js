@@ -9,103 +9,44 @@ const handleCors = (headers = {}) => ({
   ...headers
 });
 
-// 从优化结果中提取采购清单数据 - 支持前端数据优先
+// 简化后的采购数据提取函数 - 直接使用前端传递的数据
 function extractProcurementData(results) {
   const procurementData = {
     purchaseList: [],
     totalDemand: 0,
     actualPurchase: 0,
-    overallUtilization: 0,
-    totalLossRate: 0,
+    overallUtilization: 0.95, // 默认利用率
+    totalLossRate: 5, // 默认损耗率5%
     algorithm: '贪心算法'
   };
 
   try {
-    console.log('🔍 开始提取采购数据:', {
-      hasSolutions: !!results.solutions,
-      solutionsCount: results.solutions?.length || 0,
+    console.log('🔍 直接使用前端采购清单数据:', {
       hasModuleUsageStats: !!results.moduleUsageStats,
-      hasFrontendStats: !!results.frontendStats,
-      useFrontendData: results.useFrontendData
+      moduleUsageStatsCount: results.moduleUsageStats?.length || 0,
+      hasFrontendStats: !!results.frontendStats
     });
 
-    // 优先使用前端传递的moduleUsageStats数据
-    if (results.moduleUsageStats && Array.isArray(results.moduleUsageStats) && results.moduleUsageStats.length > 0) {
-      console.log('✅ 使用前端传递的moduleUsageStats数据');
+    // 直接使用前端传递的moduleUsageStats数据
+    if (results.moduleUsageStats && Array.isArray(results.moduleUsageStats)) {
+      console.log('✅ 使用前端moduleUsageStats数据');
       procurementData.purchaseList = results.moduleUsageStats.map((item, index) => ({
         specification: item.specification || '',
-        length: item.length || 0,
-        quantity: item.totalUsed || 0,
-        utilization: item.averageUtilization || 0.95,
-        remark: `利用率: ${((item.averageUtilization || 0.95) * 100).toFixed(1)}%`,
-        totalLength: item.totalLength || 0
+        length: Number(item.length) || 0,
+        quantity: Number(item.totalUsed) || Number(item.count) || 0,
+        utilization: Number(item.averageUtilization) || 0.95,
+        remark: item.remark || `规格: ${item.specification}`,
+        totalLength: Number(item.totalLength) || 0
       }));
     }
-    // 回退到使用前端统计数据
-    else if (results.frontendStats && results.frontendStats.grandTotal && results.frontendStats.grandTotal.count > 0) {
-      console.log('✅ 使用前端统计数据构建采购清单');
-      // 如果有前端统计数据，但缺少详细规格，创建默认采购清单
-      procurementData.purchaseList = [{
-        specification: '标准模数钢材',
-        length: 12000, // 默认12米
-        quantity: results.frontendStats.grandTotal.count || 0,
-        utilization: 0.95,
-        remark: '基于前端统计数据',
-        totalLength: results.frontendStats.grandTotal.totalLength || 0
-      }];
-    }
-    // 回退到从solutions提取
-    else if (results.solutions && Array.isArray(results.solutions)) {
-      console.log('✅ 从solutions提取数据');
-      const moduleUsageMap = new Map();
-      
-      results.solutions.forEach((solution, solutionIndex) => {
-        console.log(`处理解决方案 ${solutionIndex}:`, {
-          hasModuleUsage: !!solution.moduleUsage,
-          moduleUsageCount: solution.moduleUsage?.length || 0
-        });
-        
-        if (solution.moduleUsage && Array.isArray(solution.moduleUsage)) {
-          solution.moduleUsage.forEach(usage => {
-            if (usage && usage.specification && usage.length !== undefined) {
-              const key = `${usage.specification}_${usage.length}`;
-              if (moduleUsageMap.has(key)) {
-                const existing = moduleUsageMap.get(key);
-                existing.quantity += usage.quantity || 0;
-              } else {
-                moduleUsageMap.set(key, {
-                  specification: usage.specification,
-                  length: usage.length,
-                  quantity: usage.quantity || 0,
-                  utilization: usage.utilization || 0,
-                  remark: usage.remark || ''
-                });
-              }
-            }
-          });
-        }
-      });
-
-      procurementData.purchaseList = Array.from(moduleUsageMap.values());
-    }
-    // 如果所有数据源都为空，使用空数据但确保有记录
-    else {
-      console.log('⚠️ 所有数据源都为空，创建空采购清单');
-      procurementData.purchaseList = [];
-    }
-
+    
     // 计算统计数据
     procurementData.actualPurchase = procurementData.purchaseList.reduce((sum, item) => sum + item.quantity, 0);
-    procurementData.totalDemand = procurementData.purchaseList.reduce((sum, item) => sum + (item.totalLength || item.length * item.quantity), 0);
-    
-    if (procurementData.purchaseList.length > 0) {
-      procurementData.overallUtilization = procurementData.purchaseList.reduce((sum, item) => sum + item.utilization, 0) / procurementData.purchaseList.length;
-    }
+    procurementData.totalDemand = procurementData.purchaseList.reduce((sum, item) => sum + item.totalLength, 0);
 
-    console.log('📊 提取结果:', {
+    console.log('📊 采购清单结果:', {
       purchaseListCount: procurementData.purchaseList.length,
       actualPurchase: procurementData.actualPurchase,
-      overallUtilization: procurementData.overallUtilization,
       totalDemand: procurementData.totalDemand
     });
 
