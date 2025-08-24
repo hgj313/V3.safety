@@ -276,14 +276,14 @@ exports.handler = async (event, context) => {
     const data = JSON.parse(event.body);
     
     console.log('📥 收到导出请求:', {
-      hasModuleUsageStats: !!(data.results?.moduleUsageStats),
-      moduleUsageStatsCount: data.results?.moduleUsageStats?.length || 0,
-      hasFrontendStats: !!(data.results?.frontendStats),
+      hasModuleUsageStats: !!(data.moduleUsageStats),
+      moduleUsageStatsCount: data.moduleUsageStats?.sortedStats?.length || 0,
+      hasFrontendStats: !!(data.frontendStats),
       bodySize: event.body.length
     });
 
     // 提取真实采购数据
-    const procurementData = extractRealProcurementData(data.results || {});
+    const procurementData = extractRealProcurementData(data);
     
     // 生成真实Excel
     const workbook = await generateRealExcelReport(procurementData);
