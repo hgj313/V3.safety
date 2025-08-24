@@ -133,35 +133,38 @@ exports.handler = async (event, context) => {
     };
   }
   
+  // 添加请求基本信息日志
+  console.log('📡 收到请求:', {
+    httpMethod: event.httpMethod,
+    path: event.path,
+    headers: event.headers,
+    bodyLength: event.body ? event.body.length : 0
+  });
+  
   try {
     const data = JSON.parse(event.body);
     
-    // 添加调试日志
+    // 添加详细调试日志
     console.log('📊 收到导出请求数据:', {
       hasResults: !!data.results,
       hasExportOptions: !!data.exportOptions,
       resultsType: typeof data.results,
       resultsKeys: data.results ? Object.keys(data.results) : [],
-      exportOptions: data.exportOptions
+      bodyLength: event.body ? event.body.length : 0,
+      fullData: JSON.stringify(data, null, 2)
     });
     
-    // 验证必需的数据
-    if (!data.results || !data.exportOptions) {
-      return {
-        statusCode: 400,
-        headers: handleCors({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ 
-          error: 'Missing required data',
-          details: {
-            results: !data.results ? 'results is missing' : 'present',
-            exportOptions: !data.exportOptions ? 'exportOptions is missing' : 'present'
-          }
-        })
-      };
+    // 验证数据并提供默认值
+    const results = data.results || {};
+    const exportOptions = data.exportOptions || {};
+    
+    if (!results.solutions || !Array.isArray(results.solutions)) {
+      console.log('⚠️ 没有解决方案数据，使用空数据');
+      results.solutions = [];
     }
     
     // 从优化结果中提取采购清单数据
-    const procurementData = extractProcurementData(data.results);
+    const procurementData = extractProcurementData(results);
     
     // 生成Excel
     const workbook = await generateExcelReport(procurementData);

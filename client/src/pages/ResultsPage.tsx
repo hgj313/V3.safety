@@ -169,8 +169,9 @@ const ResultsPage: React.FC = () => {
         }
       });
       
+      // 确保发送正确的数据结构
       const exportData = {
-        results: results,
+        results: results || {},
         exportOptions: {
           format: 'excel',
           includeCharts: false,
@@ -179,6 +180,15 @@ const ResultsPage: React.FC = () => {
           customTitle: `钢材优化报告_${new Date().toISOString().slice(0, 10)}`
         }
       };
+      
+      // 添加测试数据验证
+      console.log('📤 发送数据验证:', {
+        resultsExists: !!results,
+        hasSolutions: results?.solutions?.length > 0,
+        solutionsCount: results?.solutions?.length || 0,
+        exportDataKeys: Object.keys(exportData),
+        bodySize: JSON.stringify(exportData).length
+      });
 
       // 检测环境并选择正确的端点
       const isNetlify = window.location.hostname.includes('netlify.app') || 
