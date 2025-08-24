@@ -15,6 +15,17 @@ function extractRealProcurementData(requestData) {
   try {
     console.log('🔍 提取真实采购数据...');
     console.log('📥 接收到的数据结构:', JSON.stringify(requestData, null, 2));
+    
+    // 添加详细的数据结构检查
+    console.log('🔍 数据结构检查:', {
+      hasRequestData: !!requestData,
+      hasModuleUsageStats: !!requestData?.moduleUsageStats,
+      hasFrontendStats: !!requestData?.frontendStats,
+      moduleUsageStatsType: typeof requestData?.moduleUsageStats,
+      frontendStatsType: typeof requestData?.frontendStats,
+      moduleUsageStatsKeys: requestData?.moduleUsageStats ? Object.keys(requestData.moduleUsageStats) : 'N/A',
+      frontendStatsKeys: requestData?.frontendStats ? Object.keys(requestData.frontendStats) : 'N/A'
+    });
 
     const procurementData = {
       purchaseList: [],
@@ -24,13 +35,12 @@ function extractRealProcurementData(requestData) {
       summary: {}
     };
 
-    // 直接从前端发送的results中提取
-    const results = requestData?.results;
-    if (results && results.moduleUsageStats) {
+    // 直接从前端发送的moduleUsageStats中提取
+    const moduleUsageStats = requestData?.moduleUsageStats;
+    if (moduleUsageStats && moduleUsageStats.sortedStats) {
       console.log('✅ 找到前端moduleUsageStats');
       
       // 处理前端真实数据结构
-      const moduleUsageStats = results.moduleUsageStats;
       let rawData = [];
       
       // 检查是数组还是对象结构

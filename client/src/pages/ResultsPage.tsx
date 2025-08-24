@@ -194,9 +194,15 @@ const ResultsPage: React.FC = () => {
         }
       });
       
-      // 确保发送正确的数据结构
+      // 确保发送正确的数据结构，包含真实的moduleUsageStats
       const exportData = {
         results: exportResults,
+        moduleUsageStats: processedResults.moduleUsageStats,
+        frontendStats: {
+          totalModuleCount: processedResults.totalStats.totalModuleCount,
+          totalModuleLength: processedResults.totalStats.totalModuleLength,
+          grandTotal: processedResults.moduleUsageStats.grandTotal
+        },
         exportOptions: {
           format: 'excel',
           includeCharts: false,
@@ -215,7 +221,8 @@ const ResultsPage: React.FC = () => {
         moduleUsageStatsCount: exportResults.moduleUsageStats?.length || 0,
         grandTotalCount: processedResults.moduleUsageStats.grandTotal.count,
         exportDataKeys: Object.keys(exportData),
-        bodySize: JSON.stringify(exportData).length
+        bodySize: JSON.stringify(exportData).length,
+        moduleUsageStatsSample: exportData.moduleUsageStats?.sortedStats?.slice(0, 2) || 'N/A'
       });
 
       // 检测环境并选择正确的端点
