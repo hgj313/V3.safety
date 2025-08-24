@@ -23,13 +23,25 @@ function extractProcurementData(results) {
   try {
     console.log('🔍 直接使用前端采购清单数据:', {
       hasModuleUsageStats: !!results.moduleUsageStats,
-      moduleUsageStatsCount: results.moduleUsageStats?.length || 0,
+      moduleUsageStatsCount: results.moduleUsageStats?.length || results.moduleUsageStats?.sortedStats?.length || 0,
       hasFrontendStats: !!results.frontendStats
     });
 
-    // 直接使用前端传递的moduleUsageStats数据
-    if (results.moduleUsageStats && Array.isArray(results.moduleUsageStats)) {
-      console.log('✅ 使用前端moduleUsageStats数据');
+    // 检查是否有sortedStats数组(前端实际传递的结构)
+    if (results.moduleUsageStats && Array.isArray(results.moduleUsageStats.sortedStats)) {
+      console.log('✅ 使用前端moduleUsageStats.sortedStats数据');
+      procurementData.purchaseList = results.moduleUsageStats.sortedStats.map((item, index) => ({
+        specification: item.specification || '',
+        length: Number(item.length) || 0,
+        quantity: Number(item.count) || Number(item.totalUsed) || 0,
+        utilization: Number(item.averageUtilization) || 0.95,
+        remark: item.remark || `规格: ${item.specification}`,
+        totalLength: Number(item.totalLength) || 0
+      }));
+    } 
+    // 兼容之前的直接数组格式
+    else if (results.moduleUsageStats && Array.isArray(results.moduleUsageStats)) {
+      console.log('✅ 使用前端moduleUsageStats数据(兼容模式)');
       procurementData.purchaseList = results.moduleUsageStats.map((item, index) => ({
         specification: item.specification || '',
         length: Number(item.length) || 0,
