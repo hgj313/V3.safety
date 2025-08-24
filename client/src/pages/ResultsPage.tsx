@@ -151,6 +151,24 @@ const ResultsPage: React.FC = () => {
     try {
       setExporting(true);
       
+      // 验证数据
+      if (!results || !results.solutions) {
+        throw new Error('优化结果数据不完整，请确保已完成优化');
+      }
+      
+      console.log('📊 准备导出Excel数据:', {
+        hasResults: !!results,
+        hasSolutions: !!results.solutions,
+        solutionsCount: results.solutions?.length || 0,
+        exportOptions: {
+          format: 'excel',
+          includeCharts: false,
+          includeDetails: true,
+          includeLossRateBreakdown: true,
+          customTitle: `钢材优化报告_${new Date().toISOString().slice(0, 10)}`
+        }
+      });
+      
       const exportData = {
         results: results,
         exportOptions: {

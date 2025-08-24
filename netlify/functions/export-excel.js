@@ -21,25 +21,27 @@ function extractProcurementData(results) {
   };
 
   try {
-    // 从优化结果中提取模块钢材使用统计
+    // 从优化结果中提取采购清单数据
     if (results.solutions && Array.isArray(results.solutions)) {
       const moduleUsageMap = new Map();
       
       results.solutions.forEach(solution => {
-        if (solution.moduleUsage) {
+        if (solution.moduleUsage && Array.isArray(solution.moduleUsage)) {
           solution.moduleUsage.forEach(usage => {
-            const key = `${usage.specification}_${usage.length}`;
-            if (moduleUsageMap.has(key)) {
-              const existing = moduleUsageMap.get(key);
-              existing.quantity += usage.quantity || 0;
-            } else {
-              moduleUsageMap.set(key, {
-                specification: usage.specification,
-                length: usage.length,
-                quantity: usage.quantity || 0,
-                utilization: usage.utilization || 0,
-                remark: usage.remark || ''
-              });
+            if (usage && usage.specification && usage.length !== undefined) {
+              const key = `${usage.specification}_${usage.length}`;
+              if (moduleUsageMap.has(key)) {
+                const existing = moduleUsageMap.get(key);
+                existing.quantity += usage.quantity || 0;
+              } else {
+                moduleUsageMap.set(key, {
+                  specification: usage.specification,
+                  length: usage.length,
+                  quantity: usage.quantity || 0,
+                  utilization: usage.utilization || 0,
+                  remark: usage.remark || ''
+                });
+              }
             }
           });
         }
@@ -134,12 +136,27 @@ exports.handler = async (event, context) => {
   try {
     const data = JSON.parse(event.body);
     
+    // 添加调试日志
+    console.log('📊 收到导出请求数据:', {
+      hasResults: !!data.results,
+      hasExportOptions: !!data.exportOptions,
+      resultsType: typeof data.results,
+      resultsKeys: data.results ? Object.keys(data.results) : [],
+      exportOptions: data.exportOptions
+    });
+    
     // 验证必需的数据
     if (!data.results || !data.exportOptions) {
       return {
         statusCode: 400,
         headers: handleCors({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ error: 'Missing required data' })
+        body: JSON.stringify({ 
+          error: 'Missing required data',
+          details: {
+            results: !data.results ? 'results is missing' : 'present',
+            exportOptions: !data.exportOptions ? 'exportOptions is missing' : 'present'
+          }
+        })
       };
     }
     
