@@ -11,10 +11,11 @@ function handleCors(additionalHeaders = {}) {
 }
 
 // 重新设计的采购数据提取函数 - 直接使用前端真实数据
-function extractRealProcurementData(data) {
+function extractRealProcurementData(requestData) {
   try {
     console.log('🔍 提取真实采购数据...');
-    
+    console.log('📥 接收到的数据结构:', JSON.stringify(requestData, null, 2));
+
     const procurementData = {
       purchaseList: [],
       actualPurchase: 0,
@@ -23,60 +24,68 @@ function extractRealProcurementData(data) {
       summary: {}
     };
 
-    // 优先使用前端真实数据
-    if (data.moduleUsageStats && Array.isArray(data.moduleUsageStats) && data.moduleUsageStats.length > 0) {
-      console.log('✅ 使用前端真实moduleUsageStats数据');
+    // 直接从前端发送的results中提取
+    const results = requestData?.results;
+    if (results && results.moduleUsageStats) {
+      console.log('✅ 找到前端moduleUsageStats');
       
-      procurementData.purchaseList = data.moduleUsageStats.map((item, index) => ({
+      // 处理前端真实数据结构
+      const moduleUsageStats = results.moduleUsageStats;
+      let rawData = [];
+      
+      // 检查是数组还是对象结构
+      if (Array.isArray(moduleUsageStats)) {
+        // 数组结构 - 直接使用
+        rawData = moduleUsageStats;
+      } else if (moduleUsageStats.sortedStats && Array.isArray(moduleUsageStats.sortedStats)) {
+        // 对象结构，包含sortedStats数组
+        rawData = moduleUsageStats.sortedStats;
+      }
+
+      // 转换为采购清单格式
+      procurementData.purchaseList = rawData.map((item, index) => ({
         index: index + 1,
-        specification: item.specification || '未知规格',
+        specification: item.specification || item.spec || '未知规格',
         length: Number(item.length) || 0,
-        quantity: Number(item.count) || 0,
-        totalLength: Number(item.totalLength) || (Number(item.length) * Number(item.count)),
-        utilization: item.averageUtilization || 0.85,
-        remark: `规格${item.specification}，长度${item.length}mm`
+        quantity: Number(item.count) || Number(item.totalUsed) || 0,
+        totalLength: Number(item.totalLength) || 0,
+        utilization: Number(item.utilization) || Number(item.averageUtilization) || 0.85,
+        remark: `规格${item.specification || item.spec}，长度${item.length}mm`
       }));
       
       // 计算汇总
       procurementData.actualPurchase = procurementData.purchaseList.reduce((sum, item) => sum + item.quantity, 0);
       procurementData.totalDemand = procurementData.purchaseList.reduce((sum, item) => sum + item.totalLength, 0);
       
-      console.log('📊 前端数据汇总:', {
-        规格数量: procurementData.purchaseList.length,
-        总数量: procurementData.actualPurchase,
-        总长度: procurementData.totalDemand,
-        明细: procurementData.purchaseList.slice(0, 3)
-      });
+      console.log(`📊 成功提取 ${procurementData.purchaseList.length} 条真实采购记录`);
+      console.log('📋 真实数据样本:', procurementData.purchaseList.slice(0, 3));
       
-    } else if (data.frontendStats && data.frontendStats.grandTotal) {
+    } else if (requestData?.frontendStats && requestData.frontendStats.grandTotal) {
       // 使用前端总计数据
       console.log('✅ 使用前端grandTotal数据');
       
-      // 如果只有总计，需要构造基础数据
       procurementData.summary = {
-        totalModuleCount: data.frontendStats.totalModuleCount || 0,
-        totalModuleLength: data.frontendStats.totalModuleLength || 0,
-        grandTotalCount: data.frontendStats.grandTotal.count || 0,
-        grandTotalLength: data.frontendStats.grandTotal.totalLength || 0
+        totalModuleCount: requestData.frontendStats.totalModuleCount || 0,
+        totalModuleLength: requestData.frontendStats.totalModuleLength || 0,
+        grandTotalCount: requestData.frontendStats.grandTotal.count || 0,
+        grandTotalLength: requestData.frontendStats.grandTotal.totalLength || 0
       };
       
-      // 创建一个基础的采购清单
       procurementData.purchaseList = [{
         index: 1,
         specification: '综合规格',
         length: 6000,
-        quantity: data.frontendStats.grandTotal.count || 0,
-        totalLength: data.frontendStats.grandTotal.totalLength || 0,
+        quantity: requestData.frontendStats.grandTotal.count || 0,
+        totalLength: requestData.frontendStats.grandTotal.totalLength || 0,
         utilization: 0.85,
         remark: '基于前端统计的综合数据'
       }];
       
-      procurementData.actualPurchase = data.frontendStats.grandTotal.count || 0;
-      procurementData.totalDemand = data.frontendStats.grandTotal.totalLength || 0;
+      procurementData.actualPurchase = requestData.frontendStats.grandTotal.count || 0;
+      procurementData.totalDemand = requestData.frontendStats.grandTotal.totalLength || 0;
       
     } else {
       console.log('⚠️ 使用备用数据生成');
-      // 使用优化结果作为备用
       procurementData.purchaseList = [{
         index: 1,
         specification: 'HRB400',
@@ -101,6 +110,7 @@ function extractRealProcurementData(data) {
     return procurementData;
   } catch (error) {
     console.error('提取真实采购数据失败:', error);
+    console.error('错误详情:', error.stack);
     return {
       purchaseList: [],
       actualPurchase: 0,
