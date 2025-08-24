@@ -168,7 +168,6 @@ async function generateRealExcelReport(data) {
       { header: '长度(mm)', key: 'length', width: 12 },
       { header: '数量(根)', key: 'quantity', width: 12 },
       { header: '总长度(mm)', key: 'totalLength', width: 15 },
-      { header: '材料利用率', key: 'utilization', width: 12 },
       { header: '备注', key: 'remark', width: 25 }
     ];
 
@@ -185,7 +184,6 @@ async function generateRealExcelReport(data) {
           length: item.length,
           quantity: item.quantity,
           totalLength: item.totalLength,
-          utilization: item.utilization ? `${(item.utilization * 100).toFixed(1)}%` : '85.0%',
           remark: item.remark || '标准采购'
         });
 
@@ -213,7 +211,6 @@ async function generateRealExcelReport(data) {
         length: '',
         quantity: totalQuantity,
         totalLength: totalLength,
-        utilization: '',
         remark: `共${data.purchaseList.length}种规格`
       });
       
@@ -234,8 +231,7 @@ async function generateRealExcelReport(data) {
       { item: '钢材规格总数', value: data.purchaseList.length, unit: '种', description: '需要采购的不同钢材规格数量' },
       { item: '总采购数量', value: totalQuantity, unit: '根', description: '实际需要采购的钢材总数量' },
       { item: '总采购长度', value: totalLength, unit: 'mm', description: '所有钢材的总长度' },
-      { item: '预估总成本', value: totalCost.toFixed(2), unit: '元', description: '按每米7元计算的预估成本' },
-      { item: '平均利用率', value: '85.0', unit: '%', description: '整体材料利用率估算' }
+      { item: '预估总成本', value: totalCost.toFixed(2), unit: '元', description: '按每米7元计算的预估成本' }
     ];
 
     summaryData.forEach((stat, index) => {
