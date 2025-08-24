@@ -151,24 +151,39 @@ const ResultsPage: React.FC = () => {
     try {
       setExporting(true);
       
-      // 验证数据
-      if (!results || !results.solutions) {
-        throw new Error('优化结果数据不完整，请确保已完成优化');
+      // 验证数据 - 即使没有优化结果，只要有采购清单数据也可以导出
+      if (!results || (!results.solutions && !processedResults.moduleUsageStats.sortedStats.length)) {
+        throw new Error('没有可用的采购数据，请确保已完成优化或已有采购清单');
       }
 
-      // 确保数据结构完整
+      // 直接使用前端的moduleUsageStats数据，确保有采购清单
       const exportResults = {
         ...results,
         solutions: results?.solutions || [],
-        moduleUsageStats: results?.moduleUsageStats || [],
+        // 使用前端计算好的moduleUsageStats
+        moduleUsageStats: processedResults.moduleUsageStats.sortedStats.map(item => ({
+          specification: item.specification,
+          length: typeof item.length === 'number' ? item.length : parseInt(String(item.length), 10) || 0,
+          totalUsed: item.count,
+          averageUtilization: 0.95, // 默认利用率
+          totalLength: item.totalLength
+        })),
         summary: results?.summary || {},
-        optimizationDetails: results?.optimizationDetails || {}
+        optimizationDetails: results?.optimizationDetails || {},
+        // 添加前端统计数据
+        frontendStats: {
+          totalModuleCount: processedResults.totalStats.totalModuleCount,
+          totalModuleLength: processedResults.totalStats.totalModuleLength,
+          grandTotal: processedResults.moduleUsageStats.grandTotal
+        }
       };
-      
+
       console.log('📊 准备导出Excel数据:', {
         hasResults: !!results,
-        hasSolutions: !!results.solutions,
-        solutionsCount: results.solutions?.length || 0,
+        hasSolutions: !!results?.solutions,
+        hasModuleUsageStats: processedResults.moduleUsageStats.sortedStats.length > 0,
+        moduleUsageStatsCount: processedResults.moduleUsageStats.sortedStats.length,
+        grandTotalCount: processedResults.moduleUsageStats.grandTotal.count,
         exportOptions: {
           format: 'excel',
           includeCharts: false,
@@ -186,15 +201,18 @@ const ResultsPage: React.FC = () => {
           includeCharts: false,
           includeDetails: true,
           includeLossRateBreakdown: true,
-          customTitle: `钢材优化报告_${new Date().toISOString().slice(0, 10)}`
+          customTitle: `钢材优化报告_${new Date().toISOString().slice(0, 10)}`,
+          // 添加前端数据作为备选
+          useFrontendData: true
         }
       };
       
       // 添加测试数据验证
       console.log('📤 发送数据验证:', {
         resultsExists: !!results,
-        hasSolutions: results?.solutions?.length > 0,
-        solutionsCount: results?.solutions?.length || 0,
+        hasModuleUsageStats: exportResults.moduleUsageStats?.length > 0,
+        moduleUsageStatsCount: exportResults.moduleUsageStats?.length || 0,
+        grandTotalCount: processedResults.moduleUsageStats.grandTotal.count,
         exportDataKeys: Object.keys(exportData),
         bodySize: JSON.stringify(exportData).length
       });
