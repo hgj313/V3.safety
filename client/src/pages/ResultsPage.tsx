@@ -224,6 +224,9 @@ const ResultsPage: React.FC = () => {
         bodySize: JSON.stringify(exportData).length,
         moduleUsageStatsSample: exportData.moduleUsageStats?.sortedStats?.slice(0, 2) || 'N/A'
       });
+      
+      // 添加完整的发送数据日志
+      console.log('📤 完整发送数据:', JSON.stringify(exportData, null, 2));
 
       // 检测环境并选择正确的端点
       const isNetlify = window.location.hostname.includes('netlify.app') || 
