@@ -217,8 +217,8 @@ const ResultsPage: React.FC = () => {
       // 添加测试数据验证
       console.log('📤 发送数据验证:', {
         resultsExists: !!results,
-        hasModuleUsageStats: exportResults.moduleUsageStats?.length > 0,
-        moduleUsageStatsCount: exportResults.moduleUsageStats?.length || 0,
+        hasModuleUsageStats: exportData.moduleUsageStats?.sortedStats?.length > 0,
+        moduleUsageStatsCount: exportData.moduleUsageStats?.sortedStats?.length || 0,
         grandTotalCount: processedResults.moduleUsageStats.grandTotal.count,
         exportDataKeys: Object.keys(exportData),
         bodySize: JSON.stringify(exportData).length,

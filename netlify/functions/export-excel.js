@@ -50,6 +50,25 @@ function extractRealProcurementData(requestData) {
       } else if (moduleUsageStats.sortedStats && Array.isArray(moduleUsageStats.sortedStats)) {
         // 对象结构，包含sortedStats数组
         rawData = moduleUsageStats.sortedStats;
+      } else if (moduleUsageStats.bySpecification) {
+        // V3数据结构，包含bySpecification和grandTotal
+        console.log('🔄 检测到V3数据结构');
+        rawData = [];
+        
+        // 遍历所有规格的统计数据
+        Object.entries(moduleUsageStats.bySpecification).forEach(([groupKey, specData]) => {
+          // 遍历该规格下的模数钢材使用情况
+          Object.entries(specData.moduleBreakdown).forEach(([length, usage]) => {
+            rawData.push({
+              specification: specData.specification,
+              length: Number(length),
+              count: usage.count,
+              totalLength: usage.totalLength,
+              // 计算利用率（假设6米定尺）
+              utilization: usage.totalLength / (usage.count * 6000)
+            });
+          });
+        });
       }
 
       // 转换为采购清单格式
